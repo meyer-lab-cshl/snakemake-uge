@@ -44,7 +44,9 @@ cookiecutter --output-dir "${HOME}/.config/snakemake"  "gh:meyer-lab-cshl/snakem
 ```
 
 The latter command will then prompt you to set default parameters (parameter
-explanations from `snakemake --help`) :
+explanations from `snakemake --help`).
+
+### Submission parameters
 
 * `latency_wait`
 
@@ -63,7 +65,7 @@ explanations from `snakemake --help`) :
 * `use_conda`
 
   **Default**: `True`  
-  **Valid options:** `False`, `True`
+  **Valid options**: `False`, `True`
 
   This sets the default `--use-conda` parameter in `snakemake`.
 
@@ -76,8 +78,8 @@ explanations from `snakemake --help`) :
 
 * `use_singularity`
 
-  **Default**: `False`
-  **Valid options:** `False`, `True`
+  **Default**: `False`  
+  **Valid options**: `False`, `True`
 
   This sets the default `--use-singularity` parameter in `snakemake`.
 
@@ -89,8 +91,8 @@ explanations from `snakemake --help`) :
 
 * `keep_going`
 
-  **Default**: `True`
-  **Valid options:** `False`, `True`
+  **Default**: `True`  
+  **Valid options**: `False`, `True`
 
   This sets the default `--keep-going` parameter in `snakemake`.
 
@@ -207,6 +209,30 @@ explanations from `snakemake --help`) :
     --printshellcmds, -p  Print out the shell commands that will be executed.
   ```
 
+### Status check parameters
+
+* `missing_job_wait`
+
+  **Default**: 1
+
+  This set the time elapsed in minutes before a missing job id will be evaluated
+  by qacct. If qacct has a status exception, job is considered failed.
+
+* `cpu_hung_min_time`
+
+  **Default**: 1
+
+  This sets the time limit for checking if a job is hung. This is only evaluated if the walltime
+  has passed`cpu_hung_min_time` minutes.
+  
+* `cpu_hung_max_ratio`
+
+  **Default**: 0.01
+  
+  This sets the parameter determining if a job should be killed. Ff the walltime
+  has passed`cpu_hung_min_time` minutes and the ratio of cpu/walltime is below `cpu_hung_max_ratio`,
+  the job will be killed.
+  
 ## Usage
 
 Once set up is complete, this will allow you to run snakemake with the cluster
