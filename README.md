@@ -43,10 +43,10 @@ Then use cookiecutter to create the profile in the config directory:
 cookiecutter --output-dir "${HOME}/.config/snakemake"  "gh:meyer-lab-cshl/snakemake-uge"
 ```
 
-The latter command will then prompt you to set default parameters (parameter
-explanations from `snakemake --help`).
+The latter command will then prompt you to set default parameters described in the next two subsections.
 
 ### Submission parameters
+Parameter explanations as retrieved from `snakemake --help`.
 
 * `latency_wait`
 
@@ -279,32 +279,32 @@ minutes
 are not guaranteed to be valid on non-UGE cluster systems.
 
 All settings are given with the `rule` name as the key, and the additional
-cluster settings as a string ([scalar][yaml-collections]) or list
-([sequence][yaml-collections]).
+cluster settings as a list ([sequence][yaml-collections]), with the UGe-specific flag followed by
+its argument (if applicable).
 
 #### Examples
 
 `Snakefile`
 
 ```python
-rule foo:
-    input: "foo.txt"
-    output: "bar.txt"
+rule grep:
+    input: "input.txt"
+    output: "output.txt"
     shell:
-        "grep 'bar' {input} > {output}"
+        "grep 'icecream' {input} > {output}"
         
-rule bar:
-    input: "bar.txt"
-    output: "file.out"
+rule count:
+    input: "output.txt"
+    output: "output_count.txt"
     shell:
-        "echo blah > {output}"
+        "wc -l {input} > {output}"
 ```
 
-`lsf.yaml`
+`uge.yaml`
 
 ```yaml
 __default__:
-  - "-P project2"
+  - "-P "
   - "-W 1:05"
 
 foo:
