@@ -20,7 +20,7 @@ else:
 
 PathLike = Union[str, Path]
 
-class BsubInvocationError(Exception):
+class QsubInvocationError(Exception):
     pass
 
 class JobidNotFoundError(Exception):
@@ -82,13 +82,13 @@ class Submitter:
     @property
     def resources_cmd(self) -> str:
         if self.threads > 1:
-            res_cmd = "-pe smp {threads}".format(threads=self.threads)
+            res_cmd = "-pe smp {threads} ".format(threads=self.threads)
             per_thread = round(self.mem_mb / self.threads, 2)
         else:
             res_cmd = ""
             per_thread = self.mem_mb
-        res_cmd += " -l h_vmem={per_thread}M".format(per_thread=per_thread)
-        res_cmd += " -l m_mem_free={per_thread}M".format(per_thread=per_thread)
+        res_cmd += "-l h_vmem={per_thread}M ".format(per_thread=per_thread)
+        res_cmd += "-l m_mem_free={per_thread}M".format(per_thread=per_thread)
         if self.runtime:
             hrs = self.runtime // 60
             mins = runtime % 60
@@ -183,7 +183,7 @@ class Submitter:
     @property
     def submit_cmd(self) -> str:
         params = [
-            "qsub -cwd ",
+            "qsub -cwd",
             self.resources_cmd,
             self.jobinfo_cmd,
             self.queue_cmd,
@@ -202,7 +202,7 @@ class Submitter:
 
     def _submit_cmd_and_get_external_job_id(self) -> int:
         output_stream, error_stream = OSLayer.run_process(self.submit_cmd)
-        match = re.search(r"Your job (\d+)", output_stream)
+        match = re.search(r"Your job (\d+) .*", output_stream)
         jobid = match.group(1)
         return int(jobid)
 
@@ -221,7 +221,7 @@ class Submitter:
             )
             OSLayer.print(parameters_to_status_script)
         except subprocess.CalledProcessError as error:
-            raise BsubInvocationError(error)
+            raise QsubInvocationError(error)
         except AttributeError as error:
             raise JobidNotFoundError(error)
 
