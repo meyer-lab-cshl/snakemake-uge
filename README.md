@@ -1,6 +1,9 @@
 # Snakemake UGE profile
 
-[Snakemake profile][profile] for running jobs on an [UGE][uge] cluster.
+[Snakemake profile][profile] for running jobs on a Univa Grid Engine (UGE).
+Documentation, Submitter class and helpers heavily based on excellent work by
+@mbhall88 for [snakemake-lsf profile][lsf-profile]. Status checker based on 
+[Broad-UGER][broad-uger] checker.
 
 [TOC]: #
 
@@ -12,16 +15,13 @@
 - [Usage](#usage)
   - [Standard rule-specific cluster resource settings](#standard-rule-specific-cluster-resource-settings)
   - [Non-standard rule-specific cluster resource settings](#non-standard-rule-specific-cluster-resource-settings)
-- [Known Issues](#known-issues)
-- [Contributing](#contributing)
-
 
 ## Install
 
 ### Dependencies
 
 This profile is deployed using [Cookiecutter][cookiecutter-repo]. `cookiecutter`
-can be easily installed using `conda` or `pip`:
+can be installed using `conda` or `pip`:
 
 ```bash
 pip install --user cookiecutter
@@ -31,187 +31,212 @@ conda install -c conda-forge cookiecutter
 
 ### Profile
 
-Download and set up the profile on your cluster
+To download and set up this profile on your cluster, create a profiles' directory
+for snakemake:
 
 ```bash
-# create profiles directory for snakemake
-dir_profiles="${HOME}/.config/snakemake"
-mkdir -p "$dir_profiles"
-# use cookiecutter to create the profile in the config directory
-template="gh:Snakemake-Profiles/snakemake-uge"
-cookiecutter --output-dir "$dir_profiles" "$template"
+mkdir -p "${HOME}/.config/snakemake"
 ```
 
-The latter command will then prompt you to set default parameters (parameter
-explanations from `snakemake --help`) :
+Then use cookiecutter to create the profile in the config directory:
+```bash
+cookiecutter --output-dir "${HOME}/.config/snakemake"  "gh:meyer-lab-cshl/snakemake-uge"
+```
 
-#### `latency_wait`
+The latter command will then prompt you to set default parameters described in the next two subsections.
 
-**Default:** `5`
+### Submission parameters
+Parameter explanations as retrieved from `snakemake --help`.
 
-This sets the default `--latency-wait/--output-wait/-w` parameter in
-`snakemake`.
+* `latency_wait`
 
-```text
-  --latency-wait SECONDS, --output-wait SECONDS, -w SECONDS
+  **Default:** `120`
+
+  This sets the default `--latency-wait/--output-wait/-w` parameter in
+  `snakemake`.
+
+  ```text
+    --latency-wait SECONDS, --output-wait SECONDS, -w SECONDS
                         Wait given seconds if an output file of a job is not
                         present after the job finished. This helps if your
-                        filesystem suffers from latency (default 5).
-```
+                        filesystem suffers from latency (default 120).
+  ```
 
-#### `use_conda`
+* `use_conda`
 
-**Default**: `False`  
-**Valid options:** `False`, `True`
+  **Default**: `True`  
+  **Valid options**: `False`, `True`
 
-This sets the default `--use-conda` parameter in `snakemake`.
+  This sets the default `--use-conda` parameter in `snakemake`.
 
-```text
-  --use-conda           If defined in the rule, run job in a conda
+  ```text
+   --use-conda           If defined in the rule, run job in a conda
                         environment. If this flag is not set, the conda
                         directive is ignored.
-```
+  ```
 
 
-#### `use_singularity`
-**Default**: `False`
-**Valid options:** `False`, `True`
+* `use_singularity`
 
-This sets the default `--use-singularity` parameter in `snakemake`.
+  **Default**: `False`  
+  **Valid options**: `False`, `True`
 
-```text
-  --use-singularity     If defined in the rule, run job within a singularity
+  This sets the default `--use-singularity` parameter in `snakemake`.
+
+  ```text
+    --use-singularity     If defined in the rule, run job within a singularity
                         container. If this flag is not set, the singularity
-                        directive is ignored.
-```
+                         directive is ignored.
+  ```
 
-#### `keep_going`
+* `keep_going`
 
-**Default**: `False`
-**Valid options:** `False`, `True`
+  **Default**: `True`  
+  **Valid options**: `False`, `True`
 
-This sets the default `--keep-going` parameter in `snakemake`.
+  This sets the default `--keep-going` parameter in `snakemake`.
 
-```text
---keep-going        Go on with independent jobs if a job fails.
-```
+  ```text
+  --keep-going        Go on with independent jobs if a job fails.
+  ```
 
-#### `restart_times`
+* `restart_times`
 
-**Default**: `0`
+  **Default**: `0`
+  
+  This sets the default `--restart-times` parameter in `snakemake`.
 
-This sets the default `--restart-times` parameter in `snakemake`.
-
-```text
-  --restart-times RESTART_TIMES
+  ```text
+    --restart-times RESTART_TIMES
                         Number of times to restart failing jobs (defaults to
                         0).
-```
+  ```
 
-#### `jobs`
+* `jobs`
 
-**Default**: `500`
+  **Default**: `500`
 
-This sets the default `--cores/--jobs/-j` parameter in `snakemake`.
+  This sets the default `--cores/--jobs/-j` parameter in `snakemake`.
 
-```text
-  --cores [N], --jobs [N], -j [N]
+  ```text
+    --cores [N], --jobs [N], -j [N]
                         Use at most N cores in parallel. If N is omitted or
                         'all', the limit is set to the number of available
                         cores.
-```
+  ```
 
-In the context of a cluster, `-j` denotes the number of jobs submitted to the
-cluster at the same time<sup>[1][1]</sup>.
+  In the context of a cluster, `-j` denotes the number of jobs submitted to the
+  cluster at the same time<sup>[1][1]</sup>.
 
-#### `default_mem_mb`
+* `default_mem_mb`
 
-**Default**: `1024`
+  **Default**: `1024`
 
-This sets the default memory, in megabytes, for a `rule` being submitted to the
-cluster without `mem_mb` set under `resources`.
+  This sets the default memory, in megabytes, for a `rule` being submitted to the
+  cluster without `mem_mb` set under `resources`.
 
-See [below](#standard-rule-specific-cluster-resource-settings) for how to
-overwrite this in a `rule`.
+  See [below](#standard-rule-specific-cluster-resource-settings) for how to
+  overwrite this in a `rule`.
 
-#### `default_threads`
+* `default_threads`
 
-**Default**: `1`
+  **Default**: `1`
 
-This sets the default number of threads for a `rule` being submitted to the
-cluster without the `threads` variable set.
+  This sets the default number of threads for a `rule` being submitted to the
+  cluster without the `threads` variable set.
 
-See [below](#standard-rule-specific-cluster-resource-settings) for how to
-overwrite this in a `rule`.
+  See [below](#standard-rule-specific-cluster-resource-settings) for how to
+  overwrite this in a `rule`.
 
-#### `missing_job_wait`
-#### `default_cluster_logdir`
+* `default_cluster_logdir`
 
-**Default**: `"logs/cluster"`
+  **Default**: `"cluster_logs"`
 
-This sets the directory under which cluster log files are written. The path is
-relative to the working directory of the pipeline. If it does not exist, it will
-be created.
-
-
-#### `default_queue`
-
-**Default**: None
-
-The default queue on the cluster to submit jobs to. If left unset, then the
-default on your cluster will be used.
-The `bsub` parameter that this controls is [`-q`][bsub-q].
+  This sets the directory under which cluster log files are written. The path is
+  relative to the working directory of the pipeline. If it does not exist, it will
+  be created.
 
 
-#### `max_status_checks_per_second`
+* `default_queue`
 
-**Default**: `10`
+  **Default**: None
 
-This sets the default `--max-status-checks-per-second` parameter in `snakemake`.
+  The default queue on the cluster to submit jobs to. If left unset, then the
+  default on your cluster will be used.
+  The `qsub` parameter that this controls is [`-q`][qsub-q].
 
-```text
-  --max-status-checks-per-second MAX_STATUS_CHECKS_PER_SECOND
+
+* `max_status_checks_per_second`
+
+  **Default**: `10`
+
+  This sets the default `--max-status-checks-per-second` parameter in `snakemake`.
+
+  ```text
+    --max-status-checks-per-second MAX_STATUS_CHECKS_PER_SECOND
                         Maximal number of job status checks per second,
                         default is 10, fractions allowed.
-```
+  ```
 
-#### `max_jobs_per_second`
+* `max_jobs_per_second`
 
-**Default**: `10`
+  **Default**: `10`
 
-This sets the default `--max-jobs-per-second` parameter in `snakemake`.
+  This sets the default `--max-jobs-per-second` parameter in `snakemake`.
 
-```text
-  --max-jobs-per-second MAX_JOBS_PER_SECOND
+  ```text
+    --max-jobs-per-second MAX_JOBS_PER_SECOND
                         Maximal number of cluster/drmaa jobs per second,
                         default is 10, fractions allowed.
-```
+  ```
 
-#### `profile_name`
+* `profile_name`
 
-**Default**: `uge`
+  **Default**: `uge`
 
-The name to use for this profile. The directory for the profile is created as
-this name i.e. `$HOME/.config/snakemake/<profile_name>`.
-This is also the value you pass to `snakemake --profile <profile_name>`.
+  The name to use for this profile. The directory for the profile is created as
+  this name i.e. `$HOME/.config/snakemake/<profile_name>`.
+  This is also the value you pass to `snakemake --profile <profile_name>`.
 
+* `print_shell_commands`
 
+  **Default**: `False`
+  **Valid options:** `False`, `True`
 
-#### `print_shell_commands`
+  This sets the default ` --printshellcmds/-p` parameter in `snakemake`.
 
-**Default**: `False`
-**Valid options:** `False`, `True`
+  ```text
+    --printshellcmds, -p  Print out the shell commands that will be executed.
+  ```
 
-This sets the default ` --printshellcmds/-p` parameter in `snakemake`.
+### Status check parameters
 
-```text
-  --printshellcmds, -p  Print out the shell commands that will be executed.
-```
+* `missing_job_wait`
 
+  **Default**: 1
+
+  This set the time elapsed in minutes before a missing job id will be evaluated
+  by qacct. If qacct has a status exception, job is considered failed.
+
+* `cpu_hung_min_time`
+
+  **Default**: 1
+
+  This sets the time limit for checking if a job is hung. This is only evaluated if the walltime
+  has passed`cpu_hung_min_time` minutes.
+  
+* `cpu_hung_max_ratio`
+
+  **Default**: 0.01
+  
+  This sets the parameter determining if a job should be killed. Ff the walltime
+  has passed`cpu_hung_min_time` minutes and the ratio of cpu/walltime is below `cpu_hung_max_ratio`,
+  the job will be killed.
+  
 ## Usage
 
 Once set up is complete, this will allow you to run snakemake with the cluster
-profile using the `--profile` flag. For profile name was `uge`, you can run:
+profile using the `--profile` flag. For profile name `uge`, you can run:
 
 ```bash
 snakemake --profile uge [snakemake options]
@@ -241,49 +266,45 @@ Per-rule configuration must be placed in a file called `<profile_name>.yaml`
 and **must** be located in the working directory for the pipeline. If you set
 `workdir` manually within your workflow, the config file has to be in there.
 
-A cluster configuration can be provided to specify additional information:
-+ `mem_mb`: the memory that will be requested for the rule in megabytes.
-  Overriden by `resources.mem_mb`. If neither provided, use a default value (in
-  cookiecutter configuration).
-+ `runtime`: the maximum amount of time the job will be allowed to run for in
-  minutes
-+ `queue`: override the default queue for this job.
-+ `logdir`: override the default cluster log directory for this job.
-+ `output`: override the default name of stdout logfile
-+ `error`: override the default name of stderr logfile
-+ `jobname`: override the default name of the job
+The cluster configuration can provide the following parameters:
+* `runtime`: the maximum amount of time the job will be allowed to run for in
+minutes
+* `queue`: override the default queue for this job.
+* `logdir`: override the default cluster log directory for this job.
+* `output`: override the default name of stdout logfile
+* `error`: override the default name of stderr logfile
+* `jobname`: override the default name of the job
 
-
-***NOTE:*** these settings are only valid for this profile and are not guaranteed
-to be valid on non-UGE cluster systems.
+***NOTE:*** these settings are highly specific to the UGE cluster system and this profile and
+are not guaranteed to be valid on non-UGE cluster systems.
 
 All settings are given with the `rule` name as the key, and the additional
-cluster settings as a string ([scalar][yaml-collections]) or list
-([sequence][yaml-collections]).
+cluster settings as a list ([sequence][yaml-collections]), with the UGe-specific flag followed by
+its argument (if applicable).
 
 #### Examples
 
 `Snakefile`
 
 ```python
-rule foo:
-    input: "foo.txt"
-    output: "bar.txt"
+rule grep:
+    input: "input.txt"
+    output: "output.txt"
     shell:
-        "grep 'bar' {input} > {output}"
+        "grep 'icecream' {input} > {output}"
         
-rule bar:
-    input: "bar.txt"
-    output: "file.out"
+rule count:
+    input: "output.txt"
+    output: "output_count.txt"
     shell:
-        "echo blah > {output}"
+        "wc -l {input} > {output}"
 ```
 
-`lsf.yaml`
+`uge.yaml`
 
 ```yaml
 __default__:
-  - "-P project2"
+  - "-P "
   - "-W 1:05"
 
 foo:
@@ -305,24 +326,14 @@ $ bsub [options] -P project2 -W 1:05 -P gpu -gpu 'gpu resources' ...
 
 Although `-P` is provided twice, LSF uses the last instance.
 
-```yaml
-__default__: "-P project2 -W 1:05"
-
-foo: "-P gpu -gpu 'gpu resources'"
-```
-
-The above is also a valid form of the previous example but **not recommended**.
-
-
-## Contributing
-
-Please refer to [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 <!--Link References-->
 
-[leandro]: https://github.com/leoisl
+[lsf-profile]: https://github.com/Snakemake-Profiles/snakemake-lsf
+[broad-uger]: https://github.com/broadinstitute/snakemake-broad-uger
 [snakemake_params]: https://snakemake.readthedocs.io/en/stable/executing/cli.html#all-options
-[profile]: https://snakemake.readthedocs.io/en/stable/executable.html#profiles
+[cookiecutter-repo]: https://github.com/cookiecutter/cookiecutter
+[profile]: https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles
 [1]: https://snakemake.readthedocs.io/en/stable/executing/cluster-cloud.html#cluster-execution
 [uuid]: https://docs.python.org/3.6/library/uuid.html
 [config-deprecate]: https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html#cluster-configuration-deprecated
