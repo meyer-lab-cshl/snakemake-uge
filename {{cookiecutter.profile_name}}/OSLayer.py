@@ -33,6 +33,7 @@ class OSLayer:
             cmd, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         return (
+            completed_process.returncode,
             completed_process.stdout.decode().strip(),
             completed_process.stderr.decode().strip(),
         )

@@ -94,6 +94,7 @@ class TestSubmitter(unittest.TestCase):
         OSLayer,
         OSLayer.run_process.__name__,
         return_value=(
+            "0",
             (
                 "Your job 8697223 is submitted to default queue q1."
                 "logs/cluster/2_z137TAmCoQGdWHohm5m2zHH5EruIEJBcQoi.out"
@@ -129,7 +130,7 @@ class TestSubmitter(unittest.TestCase):
         expected = 8697223
         self.assertEqual(actual, expected)
 
-    @patch.object(OSLayer, OSLayer.run_process.__name__, return_value=("", ""))
+    @patch.object(OSLayer, OSLayer.run_process.__name__, return_value=("", "", ""))
     @patch.object(
         CookieCutter, CookieCutter.get_log_dir.__name__, return_value="logdir"
     )
@@ -172,7 +173,7 @@ class TestSubmitter(unittest.TestCase):
     @patch.object(
         OSLayer,
         OSLayer.run_process.__name__,
-        return_value=("Your job 123456 was submitted.", "",),
+        return_value=("0", "Your job 123456 was submitted.", "",),
     )
     @patch.object(OSLayer, OSLayer.print.__name__)
     def test___submit___successfull_submit(

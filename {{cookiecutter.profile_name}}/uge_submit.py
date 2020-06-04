@@ -201,7 +201,7 @@ class Submitter:
         OSLayer.remove_file(self.errlog)
 
     def _submit_cmd_and_get_external_job_id(self) -> int:
-        output_stream, error_stream = OSLayer.run_process(self.submit_cmd)
+        returncode, output_stream, error_stream = OSLayer.run_process(self.submit_cmd)
         match = re.search(r"Your job (\d+) .*", output_stream)
         jobid = match.group(1)
         return int(jobid)
