@@ -18,4 +18,3 @@ class CookieCutter:
     @staticmethod
     def get_default_queue() -> str:
         return "{{cookiecutter.default_queue}}"
-
