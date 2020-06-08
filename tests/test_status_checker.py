@@ -19,7 +19,7 @@ def assert_called_n_times_with_same_args(mock, n, args):
 class TestStatusChecker(unittest.TestCase):
     @patch.object(OSLayer,
             "run_process",
-            return_value=("0", "job_state             1: r", ""))
+            return_value=(0, "job_state             1: r", ""))
 
     def test_get_status_qstat_says_process_is_r_job_status_is_running(
         self, run_process_mock
@@ -32,7 +32,7 @@ class TestStatusChecker(unittest.TestCase):
 
     @patch.object(OSLayer,
             "run_process",
-            return_value=("0", "job_state             1: t", ""))
+            return_value=(0, "job_state             1: t", ""))
     def test_get_status_qstat_says_process_t_job_status_is_running(
         self, run_process_mock
     ):
@@ -44,7 +44,7 @@ class TestStatusChecker(unittest.TestCase):
 
     @patch.object(OSLayer,
             "run_process",
-            return_value=("0", "job_state             1: s", ""))
+            return_value=(0, "job_state             1: s", ""))
 
     def test_get_status_qstat_says_process_is_s_job_status_is_running(
         self, run_process_mock
@@ -57,7 +57,7 @@ class TestStatusChecker(unittest.TestCase):
 
     @patch.object(OSLayer,
             "run_process",
-            return_value=("0", "job_state             1: R", ""))
+            return_value=(0, "job_state             1: R", ""))
 
     def test_get_status_qstat_says_process_is_R_job_status_is_running(
         self, run_process_mock
@@ -70,7 +70,7 @@ class TestStatusChecker(unittest.TestCase):
 
     @patch.object(OSLayer,
             "run_process",
-            return_value=("0", "job_state             1: qw", ""))
+            return_value=(0, "job_state             1: qw", ""))
     def test_get_status_qstat_says_process_is_qw_job_status_is_running(
         self, run_process_mock
     ):
@@ -83,7 +83,7 @@ class TestStatusChecker(unittest.TestCase):
 
     @patch.object(OSLayer,
             "run_process",
-            return_value=("0", "job_state             1: d", ""))
+            return_value=(0, "job_state             1: d", ""))
     def test_get_status_qstat_says_process_is_d_job_status_is_failed(
         self, run_process_mock
     ):
@@ -95,7 +95,7 @@ class TestStatusChecker(unittest.TestCase):
 
     @patch.object(OSLayer,
             "run_process",
-            return_value=("0", "job_state             1: E", ""))
+            return_value=(0, "job_state             1: E", ""))
     def test_get_status_qstat_says_process_is_E_job_status_is_failed(
         self, run_process_mock
     ):
@@ -112,7 +112,7 @@ class TestStatusChecker(unittest.TestCase):
         run_process_mock.side_effect = [
             QstatError,
             KeyError("test"),
-            ("0", "job_state    1: r", "")
+            (0, "job_state    1: r", "")
         ]
         uge_status_checker = StatusChecker(
             123, "test",  wait_between_tries=0.001, max_status_checks=3
@@ -131,7 +131,7 @@ class TestStatusChecker(unittest.TestCase):
 
         run_process_mock.side_effect = [
             QstatError,
-            ("0", "exit_status 1\nfailed 0", "")
+            (0, "exit_status 1\nfailed 0", "")
         ]
         uge_status_checker = StatusChecker(
             123, "dummy", wait_between_tries=0.001, max_status_checks=1
@@ -148,7 +148,7 @@ class TestStatusChecker(unittest.TestCase):
     ):
         run_process_mock.side_effect = [
             QstatError,
-            ("0", "exit_status 0\nfailed 0", "")
+            (0, "exit_status 0\nfailed 0", "")
         ]
         uge_status_checker = StatusChecker(
             123, "dummy", wait_between_tries=0.001, max_status_checks=1
@@ -161,7 +161,7 @@ class TestStatusChecker(unittest.TestCase):
 
     @patch.object(OSLayer,
             "run_process",
-            return_value = ("1", "", ""))
+            return_value = (1, "", ""))
 
     def test_get_status_qstat_and_qacct_fail_using_log_job_status_is_success(
         self, run_process_mock
@@ -179,7 +179,7 @@ class TestStatusChecker(unittest.TestCase):
 
     @patch.object(OSLayer,
             "run_process",
-            return_value=("", "", ""))
+            return_value=(0, "", ""))
     def test_query_status_using_qstat_empty_stdout_raises_QstatError(
         self, run_process_mock
     ):
