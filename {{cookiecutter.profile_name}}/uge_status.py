@@ -32,6 +32,7 @@ class StatusChecker:
     FAILED = "failed"
     STATUS_TABLE = {
         "r": RUNNING,
+        "x": RUNNING,
         "t": RUNNING,
         "s": RUNNING,
         "R": RUNNING,
@@ -57,7 +58,7 @@ class StatusChecker:
         jobid: int,
         outlog: str,
         wait_between_tries: float = 0.001,
-        max_status_checks: int = 1,
+        max_status_checks: int = 3,
     ):
         self._jobid = jobid
         self._outlog = outlog
@@ -73,14 +74,6 @@ class StatusChecker:
         return self._outlog
 
     @property
-    def cpu_hung_min_time(self) -> str:
-        return (CookieCutter.get_cpu_hung_min_time(),)
-
-    @property
-    def cpu_hung_max_ratio(self) -> str:
-        return (CookieCutter.get_cpu_hung_max_ratio(),)
-
-    @property
     def qstat_query_cmd(self) -> str:
         return "qstat -j {jobid}".format(jobid=self.jobid)
 
@@ -94,26 +87,21 @@ class StatusChecker:
 
     def _query_status_using_qstat(self) -> str:
         returncode, output_stream, error_stream = OSLayer.run_process(
-            self.qstat_query_cmd
+                self.qstat_query_cmd
         )
-
-        if returncode != "0":
+        if str(returncode) != 0:
             raise QstatError(
                 "qstat failed on job {jobid} with {returncode}".format(
                     jobid=self.jobid, returncode=returncode
                 )
             )
-
         status = self._qstat_job_state(output_stream)
-        try:
-            return self.STATUS_TABLE[status]
-        except KeyError as error:
-            print(
-                "[Predicted exception] Unknown job status {error}".format(
-                    error=error
-                ),
-                file=sys.stderr,
-            )
+        if status not in self.STATUS_TABLE.keys():
+            raise KeyError(
+                "[Predicted exception] Unknown job status {status} for {jobid}".format(
+                    status=status, jobid=self.jobid)
+                )
+        return self.STATUS_TABLE[status]
 
         # hung_status = self._handle_hung_qstat(output_stream)
         # if hung_status or self._qstat_error(output_stream):
@@ -126,7 +114,7 @@ class StatusChecker:
             self.qacct_query_cmd
         )
 
-        if returncode != "0":
+        if str(returncode) != 0:
             raise QacctError(
                 "qacct failed on job {jobid} with {returncode}".format(
                     jobid=self.jobid, returncode=returncode
@@ -134,31 +122,26 @@ class StatusChecker:
             )
 
         status = self._qacct_job_state(output_stream)
-        try:
-            return self.STATUS_TABLE[status]
-        except KeyError as error:
-            print(
-                "[Predicted exception] Unknown job status {error}".format(
-                    error=error
-                ),
-                file=sys.stderr,
-            )
+        if status not in self.STATUS_TABLE.keys():
+            raise KeyError(
+                "[Predicted exception] Unknown job status {status} for {jobid}".format(
+                    status=status, jobid=self.jobid)
+                )
+        return self.STATUS_TABLE[status]
 
     def _query_status_using_cluster_log(self) -> str:
         try:
             lastline = OSLayer.tail(self.outlog, num_lines=1)
         except (FileNotFoundError, ValueError):
             return self.STATUS_TABLE["r"]
-        try:
-            status = lastline[0].strip().decode("utf-8")
-            return self.STATUS_TABLE[status]
-        except UnknownStatusLine as error:
-            print(
-                "[Predicted exception] Unknown job status {error}".format(
-                    error=error
-                ),
-                file=sys.stderr,
-            )
+
+        status = lastline[0].strip().decode("utf-8")
+        if status not in self.STATUS_TABLE.keys():
+            raise UnknownStatusLine(
+                "[Predicted exception] Unknown job status {status} for {jobid}".format(
+                    status=status, jobid=self.jobid)
+                )
+        return self.STATUS_TABLE[status]
 
     @staticmethod
     def _extract_time(line, time_name) -> float:
@@ -181,9 +164,7 @@ class StatusChecker:
         state = ""
         for line in output_stream.split("\n"):
             if line.startswith("job_state"):
-                # get job state
-                _, state = line.split(":")
-                state = state.strip()
+                state = line.strip()[-1]
                 break  # exit for loop
         return state
 
@@ -193,11 +174,9 @@ class StatusChecker:
         failed = ""
         for line in output_stream.split("\n"):
             if line.startswith("failed"):
-                _, failed = line.split(" ")
-                failed = failed.strip()
+                failed = line.strip()[-1]
             if line.startswith("exit_status"):
-                _, exit_state = line.split(" ")
-                exit_state = exit_state.strip()
+                exit_state = line.strip()[-1]
             if failed != "" and exit_state != "":
                 break
         if failed == "0" and exit_state == "0":
@@ -288,4 +267,7 @@ if __name__ == "__main__":
     jobid = int(sys.argv[1])
     outlog = sys.argv[2]
     uge_status_checker = StatusChecker(jobid, outlog)
-    print(uge_status_checker.get_status())
+    try:
+        print(uge_status_checker.get_status())
+    except KeyboardInterrupt:
+        sys.exit(0)
