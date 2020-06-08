@@ -114,21 +114,6 @@ class TestStatusChecker(unittest.TestCase):
             KeyError("test"),
             ("0", "job_state    1: r", "")
         ]
-        self.count_fail_twice_and_then_return_DONE = 0
-
-        def fail_twice_and_then_return_DONE(cmd):
-            self.count_fail_twice_and_then_return_DONE += 1
-            if self.count_fail_twice_and_then_return_DONE == 1:
-                raise QstatError
-            elif self.count_fail_twice_and_then_return_DONE == 2:
-                raise KeyError("test")
-            elif self.count_fail_twice_and_then_return_DONE == 3:
-                return "0", "job_state    1: r", ""
-            else:
-                assert False
-
-        #run_process_mock.side_effect = fail_twice_and_then_return_DONE
-
         uge_status_checker = StatusChecker(
             123, "test",  wait_between_tries=0.001, max_status_checks=3
         )
