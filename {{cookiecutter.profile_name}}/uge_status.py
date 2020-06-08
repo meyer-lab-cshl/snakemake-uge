@@ -8,10 +8,8 @@ from pathlib import Path
 if not __name__.startswith("tests.src."):
     sys.path.append(str(Path(__file__).parent.absolute()))
     from OSLayer import OSLayer
-    from CookieCutter import CookieCutter
 else:
     from .OSLayer import OSLayer
-    from .CookieCutter import CookieCutter
 
 
 class QstatError(Exception):
@@ -42,7 +40,7 @@ class StatusChecker:
         "FAIL": FAILED,
         "EXIT_STATUS: 1": FAILED,
         "SUCCESS": SUCCESS,
-        "EXIT_STATUS: 0": SUCCESS
+        "EXIT_STATUS: 0": SUCCESS,
     }
 
     """
@@ -87,7 +85,7 @@ class StatusChecker:
 
     def _query_status_using_qstat(self) -> str:
         returncode, output_stream, error_stream = OSLayer.run_process(
-                self.qstat_query_cmd
+            self.qstat_query_cmd
         )
         if str(returncode) != 0:
             raise QstatError(
@@ -98,9 +96,9 @@ class StatusChecker:
         status = self._qstat_job_state(output_stream)
         if status not in self.STATUS_TABLE.keys():
             raise KeyError(
-                "[Predicted exception] Unknown job status {status} for {jobid}".format(
-                    status=status, jobid=self.jobid)
-                )
+                "[Predicted exception] Unknown job status "
+                "{status} for {jobid}".format(status=status, jobid=self.jobid)
+            )
         return self.STATUS_TABLE[status]
 
         # hung_status = self._handle_hung_qstat(output_stream)
@@ -124,9 +122,9 @@ class StatusChecker:
         status = self._qacct_job_state(output_stream)
         if status not in self.STATUS_TABLE.keys():
             raise KeyError(
-                "[Predicted exception] Unknown job status {status} for {jobid}".format(
-                    status=status, jobid=self.jobid)
-                )
+                "[Predicted exception] Unknown job status "
+                "{status} for {jobid}".format(status=status, jobid=self.jobid)
+            )
         return self.STATUS_TABLE[status]
 
     def _query_status_using_cluster_log(self) -> str:
@@ -138,9 +136,9 @@ class StatusChecker:
         status = lastline[0].strip().decode("utf-8")
         if status not in self.STATUS_TABLE.keys():
             raise UnknownStatusLine(
-                "[Predicted exception] Unknown job status {status} for {jobid}".format(
-                    status=status, jobid=self.jobid)
-                )
+                "[Predicted exception] Unknown job status "
+                "{status} for {jobid}".format(status=status, jobid=self.jobid)
+            )
         return self.STATUS_TABLE[status]
 
     @staticmethod
