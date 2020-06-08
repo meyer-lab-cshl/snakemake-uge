@@ -11,10 +11,6 @@
     "default_queue": "",
     "max_status_checks_per_second": 10,
     "max_jobs_per_second": 10,
-    "print_shell_commands": false,
-    "profile_name": "uge",
-    "cluster_dir": ".cluster_status",
-    "missing_job_wait": 1,
-    "cpu_hung_min_time": 1,
-    "cpu_hung_max_ratio": 0.01
+    "print_shell_commands": true,
+    "profile_name": "uge"
 }
