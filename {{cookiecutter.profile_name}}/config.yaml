@@ -1,6 +1,6 @@
-cluster: "uge-submit.py"
-cluster-status: "uge-status.py"
-jobscript: "uge-jobscript.sh"
+cluster: "uge_submit.py"
+cluster-status: "uge_status.py"
+jobscript: "uge_jobscript.sh"
 local-cores: 1
 latency-wait: "{{cookiecutter.latency_wait}}"
 use-conda: "{{cookiecutter.use_conda}}"
