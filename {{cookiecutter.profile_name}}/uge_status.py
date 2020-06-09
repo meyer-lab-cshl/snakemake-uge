@@ -62,8 +62,6 @@ class StatusChecker:
     ):
         self._jobid = jobid
         self._outlog = outlog
-        self.wait_between_tries = wait_between_tries
-        self.max_status_checks = max_status_checks
 
     @property
     def jobid(self) -> int:
@@ -74,8 +72,20 @@ class StatusChecker:
         return self._outlog
 
     @property
-    def latency_wait(self) -> str:
+    def latency_wait(self) -> int:
         return CookieCutter.get_latency_wait()
+
+    @property
+    def max_status_checks(self) -> int:
+        return CookieCutter.get_max_qstat_checks()
+
+    @property
+    def wait_between_tries(self) -> float:
+        return CookieCutter.get_time_between_qstat_checks()
+
+    @property
+    def log_status_checks(self) -> bool:
+        return CookieCutter.get_log_status_checks()
 
     @property
     def qstat_query_cmd(self) -> str:
@@ -228,71 +238,77 @@ class StatusChecker:
                 status = self._query_status_using_qstat()
                 break  # succeeded on getting the status
             except QstatError as error:
-                print(
-                    "[Predicted exception] QstatError: {error}".format(
-                        error=error
-                    ),
-                    file=sys.stderr,
-                )
-                print("Resuming...", file=sys.stderr)
+                if self.log_status_checks:
+                    print(
+                        "[Predicted exception] QstatError: {error}".format(
+                            error=error
+                        ),
+                        file=sys.stderr,
+                    )
+                    print("Resuming...", file=sys.stderr)
                 time.sleep(self.wait_between_tries)
 
             except KeyError as error:
-                print(
-                    "[Predicted exception] {error}".format(
-                        error=error
-                    ),
-                    file=sys.stderr,
-                )
-                print("Resuming...", file=sys.stderr)
+                if self.log_status_checks:
+                    print(
+                        "[Predicted exception] {error}".format(
+                            error=error
+                        ),
+                        file=sys.stderr,
+                    )
+                    print("Resuming...", file=sys.stderr)
                 time.sleep(self.wait_between_tries)
 
         if status is None or status == "finished":
-            if status is None:
+            if self.log_status_checks:
+                if status is None:
+                    print(
+                        "qstat for job {jobid} failed {try_times} times.".format(
+                            jobid=self.jobid,
+                            try_times=self.max_status_checks
+                        ),
+                        file=sys.stderr,
+                    )
+                if status == "finished":
+                    print(
+                            "Job {jobid} finished, check status via qacct".format(
+                                jobid=self.jobid),
+                            file=sys.stderr
+                        )
                 print(
-                    "qstat for job {jobid} failed {try_times} times.".format(
-                        jobid=self.jobid,
-                        try_times=self.max_status_checks
-                    ),
-                    file=sys.stderr,
-                )
-            if status == "finished":
-                print(
-                        "Job {jobid} finished, check status via qacct".format(
+                        "Checking exit status for job {jobid} via qacct".format(
                             jobid=self.jobid),
                         file=sys.stderr
-                    )
-            print(
-                    "Checking exit status for job {jobid} via qacct...".format(
-                        jobid=self.jobid),
-                    file=sys.stderr
-                    )
+                        )
             time.sleep(self.latency_wait)
 
             try:
                 status = self._query_status_using_qacct()
             except QacctError as error:
-                print(
-                    "[Predicted exception] QacctError: {error}".format(
-                        error=error
-                    ),
-                    file=sys.stderr,
-                )
+                if self.log_status_checks:
+                    print(
+                        "[Predicted exception] QacctError: {error}".format(
+                            error=error
+                        ),
+                        file=sys.stderr,
+                    )
 
             except KeyError as error:
-                print(
-                    "[Predicted exception] {error}".format(
-                        error=error
-                    ),
-                    file=sys.stderr,
-                )
+                if self.log_status_checks:
+                    print(
+                        "[Predicted exception] {error}".format(
+                            error=error
+                        ),
+                        file=sys.stderr,
+                    )
 
         if status is None:
-            print(
-                "qacct failed for job {jobid}. Checking cluster log...".format(
-                    jobid=self.jobid),
-                file=sys.stderr,
-            )
+            if self.log_status_checks:
+                print(
+                    "qacct failed for job {jobid}. Checking cluster log".format(
+                        jobid=self.jobid),
+                    file=sys.stderr,
+                )
             status = self._query_status_using_cluster_log()
 
         return status

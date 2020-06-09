@@ -20,5 +20,19 @@ class CookieCutter:
         return "{{cookiecutter.default_queue}}"
 
     @staticmethod
+    def get_log_status_checks() -> bool:
+        return "{{cookiecutter.log_status_checks}}" == "True"
+
+    @staticmethod
     def get_latency_wait() -> int:
-        return "{{cookiecutter.latency_wait}}"
+        return int("{{cookiecutter.latency_wait}}")
+
+    @staticmethod
+    def get_max_qstat_checks() -> int:
+        return int("{{cookiecutter.max_qstat_checks}}")
+
+    @staticmethod
+    def get_time_between_qstat_checks() -> float:
+        return float("{{cookiecutter.time_between_qstat_checks}}")
+
+
