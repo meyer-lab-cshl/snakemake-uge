@@ -1,5 +1,5 @@
 {
-    "latency_wait": 30,
+    "latency_wait": 45,
     "use_conda": true,
     "use_singularity": false,
     "keep_going": true,
