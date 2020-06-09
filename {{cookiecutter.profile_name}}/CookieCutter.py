@@ -18,3 +18,7 @@ class CookieCutter:
     @staticmethod
     def get_default_queue() -> str:
         return "{{cookiecutter.default_queue}}"
+
+    @staticmethod
+    def get_latency_wait() -> int:
+        return "{{cookiecutter.latency_wait}}"

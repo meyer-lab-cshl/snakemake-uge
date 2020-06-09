@@ -8,7 +8,9 @@ from pathlib import Path
 if not __name__.startswith("tests.src."):
     sys.path.append(str(Path(__file__).parent.absolute()))
     from OSLayer import OSLayer
+    from CookieCutter import CookieCutter
 else:
+    from .CookieCutter import CookieCutter
     from .OSLayer import OSLayer
 
 
@@ -72,6 +74,10 @@ class StatusChecker:
         return self._outlog
 
     @property
+    def latency_wait(self) -> str:
+        return CookieCutter.get_latency_wait()
+
+    @property
     def qstat_query_cmd(self) -> str:
         return "qstat -j {jobid}".format(jobid=self.jobid)
 
@@ -89,8 +95,6 @@ class StatusChecker:
         )
         if returncode != 0:
             if error_stream.startswith("Following jobs do not exist"):
-                print("Job {jobid} has finished, check status via "
-                        "qacct".format(jobid=self.jobid))
                 return "finished"
             raise QstatError(
                     "qstat failed on job {jobid} with: {error}".format(
@@ -243,15 +247,28 @@ class StatusChecker:
                 print("Resuming...", file=sys.stderr)
                 time.sleep(self.wait_between_tries)
 
-        if status is None or status is "finished":
+        if status is None or status == "finished":
             if status is None:
                 print(
-                    "qstat checks failed {try_times} times.".format(
+                    "qstat for job {jobid} failed {try_times} times.".format(
+                        jobid=self.jobid,
                         try_times=self.max_status_checks
                     ),
                     file=sys.stderr,
                 )
-            print("Checking status via qacct...", file=sys.stderr)
+            if status == "finished":
+                print(
+                        "Job {jobid} finished, check status via qacct".format(
+                            jobid=self.jobid),
+                        file=sys.stderr
+                    )
+            print(
+                    "Checking exit status for job {jobid} via qacct...".format(
+                        jobid=self.jobid),
+                    file=sys.stderr
+                    )
+            time.sleep(self.latency_wait)
+
             try:
                 status = self._query_status_using_qacct()
             except QacctError as error:
@@ -272,7 +289,8 @@ class StatusChecker:
 
         if status is None:
             print(
-                "qacct check failed. Checking status via cluster log...",
+                "qacct failed for job {jobid}. Checking cluster log...".format(
+                    jobid=self.jobid),
                 file=sys.stderr,
             )
             status = self._query_status_using_cluster_log()
