@@ -1,9 +1,8 @@
 # Snakemake UGE profile
 
 [Snakemake profile][profile] for running jobs on a Univa Grid Engine (UGE).
-Documentation, Submitter class and helpers heavily based on excellent work by
-@mbhall88 for [snakemake-lsf profile][lsf-profile]. Status checker based on 
-[Broad-UGER][broad-uger] checker.
+This profile is heavily based on the excellent
+[snakemake-lsf profile][lsf-profile].
 
 [TOC]: #
 
@@ -43,7 +42,10 @@ Then use cookiecutter to create the profile in the config directory:
 cookiecutter --output-dir "${HOME}/.config/snakemake"  "gh:meyer-lab-cshl/snakemake-uge"
 ```
 
-The latter command will then prompt you to set default parameters described in the next two subsections.
+The latter command will prompt you to set default parameters described in
+the next two subsections. Each parameter has default settings and simply
+pressing enter at the prompt will choose the default setting of that parameter
+for the profile.
 
 ### Submission parameters
 Parameter explanations as retrieved from `snakemake --help`.
@@ -85,7 +87,7 @@ Parameter explanations as retrieved from `snakemake --help`.
 
   ```text
     --use-singularity     If defined in the rule, run job within a singularity
-                        container. If this flag is not set, the singularity
+                         container. If this flag is not set, the singularity
                          directive is ignored.
   ```
 
@@ -132,8 +134,8 @@ Parameter explanations as retrieved from `snakemake --help`.
 
   **Default**: `1024`
 
-  This sets the default memory, in megabytes, for a `rule` being submitted to the
-  cluster without `mem_mb` set under `resources`.
+  This sets the default memory, in megabytes, for a `rule` being submitted to
+  the cluster without `mem_mb` set under `resources`.
 
   See [below](#standard-rule-specific-cluster-resource-settings) for how to
   overwrite this in a `rule`.
@@ -153,8 +155,8 @@ Parameter explanations as retrieved from `snakemake --help`.
   **Default**: `"cluster_logs"`
 
   This sets the directory under which cluster log files are written. The path is
-  relative to the working directory of the pipeline. If it does not exist, it will
-  be created.
+  relative to the working directory of the pipeline. If it does not exist, it
+  will be created.
 
 
 * `default_queue`
@@ -170,7 +172,8 @@ Parameter explanations as retrieved from `snakemake --help`.
 
   **Default**: `10`
 
-  This sets the default `--max-status-checks-per-second` parameter in `snakemake`.
+  This sets the default `--max-status-checks-per-second` parameter in
+  `snakemake`.
 
   ```text
     --max-status-checks-per-second MAX_STATUS_CHECKS_PER_SECOND
@@ -210,29 +213,36 @@ Parameter explanations as retrieved from `snakemake --help`.
   ```
 
 ### Status check parameters
+These parameters help with debugging cluster status checks. For standard use,
+it is recommended to keep the default settings of these parameters. Should
+issues occur with this profile and job status checks by snakemake, for instance
+`snakemake.exceptions.WorkflowError: Failed to obtain job status.` errors, it is
+recommended to set `log_status_checks` to True to track the issues.
 
-* `missing_job_wait`
+* `log_status_checks`
 
-  **Default**: 1
+  **Default**: False  
 
-  This set the time elapsed in minutes before a missing job id will be evaluated
-  by qacct. If qacct has a status exception, job is considered failed.
+  When set, status check tries and exceptions are printed to stderr. Recommended
+  to set to True for issues with status checks by snakemake, e.g.
+  `snakemake.exceptions.WorkflowError: Failed to obtain job status.` errors.
 
-* `cpu_hung_min_time`
+* `max_qstat_checks`
 
-  **Default**: 1
+  **Default**: 45  
 
-  This sets the time limit for checking if a job is hung. This is only evaluated if the walltime
-  has passed`cpu_hung_min_time` minutes.
-  
-* `cpu_hung_max_ratio`
+  This sets the maximum number of times `qstat -j JOBID` is invoked to determine
+  the current status of the job. If `qstat` fails because the job has
+  finished or if qstat has been called unsuccessfully for `max_qstat_checks`
+  times, then the job exit status will be determined via `qacct -j JOBID`.
 
-  **Default**: 0.01
-  
-  This sets the parameter determining if a job should be killed. Ff the walltime
-  has passed`cpu_hung_min_time` minutes and the ratio of cpu/walltime is below `cpu_hung_max_ratio`,
-  the job will be killed.
-  
+* `time_between_qstat_checks`
+
+  **Default**: 0.01  
+
+  This sets the times in seconds to wait between job status checks via
+  `qstat -j jobid`; see `max_qstat_checks` above.
+
 ## Usage
 
 Once set up is complete, this will allow you to run snakemake with the cluster
@@ -249,13 +259,19 @@ The following resources can be specified within a `rule` in the Snakemake file:
 
 - `threads: <INT>` the number of threads needed for the job. If not specified,
     will [default to the amount you set when initialising](#default-threads) the
-    profile.
+    profile. As stated in the [snakemake manual][threads], it should be noted
+    that the specified threads have to be seen as a maximum. When Snakemake is
+    executed with fewer cores, the number of threads will be adjusted.
+
 - `resources:`
   - `mem_mb = <INT>`: the memory required for the rule, in megabytes. If not
-      specified, will [default to the amount you set when initialising](#default-mem-mb)
-      the profile.
+      specified, will
+      [default to the amount you set when initialising](#default-mem-mb) the
+      profile. For details on memory specification see the snakemake
+      documentation on [resources][resources].
 
-*NOTE: these settings will override the profile defaults.*
+*NOTE: these settings within the snakemake rules will override the
+profile defaults.*
 
 ### Non-standard rule-specific cluster resource settings
 
@@ -266,21 +282,49 @@ Per-rule configuration must be placed in a file called `<profile_name>.yaml`
 and **must** be located in the working directory for the pipeline. If you set
 `workdir` manually within your workflow, the config file has to be in there.
 
-The cluster configuration can provide the following parameters:
-* `runtime`: the maximum amount of time the job will be allowed to run for in
-minutes
+Common parameters that can be provided to the cluster configuration (for
+details check `man qsub`):
+
+* `runtime`: the maximum amount of time the job will be allowed to run for
+  
+  ```text
+    -l h_rt={runtime_hr}:{runtime_min}:00
+  ```
+
 * `queue`: override the default queue for this job.
-* `logdir`: override the default cluster log directory for this job.
+  
+  ```text
+    -q QUEUENAME
+  ```
+
 * `output`: override the default name of stdout logfile
+  
+  ```text
+    -o path/to/file/for/output_stream
+  ```
+
 * `error`: override the default name of stderr logfile
+  
+  ```text
+    -o path/to/file/for/output_stream
+  ```
+
 * `jobname`: override the default name of the job
 
-***NOTE:*** these settings are highly specific to the UGE cluster system and this profile and
-are not guaranteed to be valid on non-UGE cluster systems.
+  ```text
+    -N JOBNAME
+  ```
+* `project`:  Specifies the project to which this job is assigned to
+
+  ```text
+    -P PROJECTNAME
+  ```
+***NOTE:*** these settings are highly specific to the UGE cluster system and
+this profile and are not guaranteed to be valid on non-UGE cluster systems.
 
 All settings are given with the `rule` name as the key, and the additional
-cluster settings as a list ([sequence][yaml-collections]), with the UGe-specific flag followed by
-its argument (if applicable).
+cluster settings as a list ([sequence][yaml-collections]), with the UGe-specific
+flag followed by its argument (if applicable).
 
 #### Examples
 
@@ -292,7 +336,7 @@ rule grep:
     output: "output.txt"
     shell:
         "grep 'icecream' {input} > {output}"
-        
+
 rule count:
     input: "output.txt"
     output: "output_count.txt"
@@ -304,27 +348,25 @@ rule count:
 
 ```yaml
 __default__:
-  - "-P "
-  - "-W 1:05"
+  - "-P standard "
+  - "l h_rt=01:00:00"
 
-foo:
-  - "-P gpu"
-  - "-gpu 'gpu resources'"
+grep:
+  - "-P icecream "
+  - "-N icecream.search"
 ```
 
-In this example, we specify a default (`__default__`) [project][bsub-P] (`-P`) and
-[runtime limit][bsub-W] (`-W`) that will apply to all rules.  
-We then override the project and, additionally, specify [GPU resources][bsub-gpu] for
-the rule `foo`.
-
-For those interested in the details, this will lead to a submission command, for `foo`
+In this example, we specify a default (`__default__`) project (`-P`)
+and runtime limit (`-l h_rt=01:00:00 `) that will apply to all rules.
+We then override the project and, additionally, specify a new job name for
+the rule `grep`. This will lead to a submission command, for `grep`
 that looks something like
 
 ```
-$ bsub [options] -P project2 -W 1:05 -P gpu -gpu 'gpu resources' ...
+$ qsub [options] -P standard -l h_rt=01:00:00 -P icecream -N icecream.search ...
 ```
 
-Although `-P` is provided twice, LSF uses the last instance.
+Although `-P` is provided twice, UGE uses the last instance.
 
 
 <!--Link References-->
@@ -334,9 +376,10 @@ Although `-P` is provided twice, LSF uses the last instance.
 [snakemake_params]: https://snakemake.readthedocs.io/en/stable/executing/cli.html#all-options
 [cookiecutter-repo]: https://github.com/cookiecutter/cookiecutter
 [profile]: https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles
+[threads]: https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#threads
+[resources]: https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#resources
 [1]: https://snakemake.readthedocs.io/en/stable/executing/cluster-cloud.html#cluster-execution
 [uuid]: https://docs.python.org/3.6/library/uuid.html
 [config-deprecate]: https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html#cluster-configuration-deprecated
 [yaml-collections]: https://yaml.org/spec/1.2/spec.html#id2759963
-[18]: https://github.com/Snakemake-Profiles/snakemake-lsf/issues/18
 
