@@ -13,10 +13,12 @@ if not __name__.startswith("tests.src."):
     from CookieCutter import CookieCutter
     from OSLayer import OSLayer
     from uge_config import Config
+    from memory_units import Unit, Memory
 else:
     from .CookieCutter import CookieCutter
     from .OSLayer import OSLayer
     from .uge_config import Config
+    from .memory_units import Unit, Memory
 
 PathLike = Union[str, Path]
 
@@ -31,6 +33,7 @@ class Submitter:
         self,
         jobscript: PathLike,
         cluster_cmds: List[str] = None,
+        memory_units: Unit = Unit.GIGA,
         uge_config: Optional[Config] = None,
     ):
         if cluster_cmds is None:
@@ -40,8 +43,10 @@ class Submitter:
 
         self._jobscript = jobscript
         self._cluster_cmd = " ".join(cluster_cmds)
+        self._memory_units = memory_units
         self._job_properties = read_job_properties(self._jobscript)
         self.uge_config = uge_config
+
 
     @property
     def jobscript(self) -> str:
@@ -65,12 +70,16 @@ class Submitter:
         return self.job_properties.get("resources", dict())
 
     @property
-    def mem_mb(self) -> int:
+    def mem_mb(self) -> Memory:
         mem_value = self.resources.get(
             "mem_mb", self.cluster.get("mem_mb",
                 CookieCutter.get_default_mem_mb())
         )
-        return int(mem_value)
+        return Memory(mem_value, unit=Unit.MEGA)
+
+    @property
+    def memory_units(self) -> Unit:
+        return self._memory_units
 
     @property
     def runtime(self) -> int:
@@ -81,14 +90,16 @@ class Submitter:
 
     @property
     def resources_cmd(self) -> str:
+        mem_in_cluster_units = self.mem_mb.to(self.memory_units)
         if self.threads > 1:
             res_cmd = "-pe smp {threads} ".format(threads=self.threads)
-            per_thread = round(self.mem_mb / self.threads, 2)
+            per_thread = round(mem_in_cluster_units.value / self.threads, 2)
+            per_thread_to_submit = math.ceil(per_thread)
         else:
             res_cmd = ""
-            per_thread = self.mem_mb
-        res_cmd += "-l h_vmem={per_thread}M ".format(per_thread=per_thread)
-        res_cmd += "-l m_mem_free={per_thread}M".format(per_thread=per_thread)
+            per_thread = math.ceil(mem_in_cluster_units.value)
+        res_cmd += "-l h_vmem={per_thread}G ".format(per_thread=per_thread)
+        res_cmd += "-l m_mem_free={per_thread}G".format(per_thread=per_thread)
         if self.runtime:
             hrs = self.runtime // 60
             mins = runtime % 60
