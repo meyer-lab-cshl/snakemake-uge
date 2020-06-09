@@ -1,8 +1,18 @@
 # Snakemake UGE profile
 
-[Snakemake profile][profile] for running jobs on a Univa Grid Engine (UGE).
-This profile is heavily based on the excellent
-[snakemake-lsf profile][lsf-profile].
+The repository provides a [Snakemake profile][profile] for running jobs on a Univa Grid Engine (UGE).
+It is heavily based on the excellent [snakemake-lsf profile][lsf-profile].
+
+After installation and set-up of this profile (described in detail below), snakemake can be run on a UGE
+with the simple command:
+
+```bash
+snakemake --profile uge [snakemake options]
+```
+
+The profile takes care of job submission and status checks. Rule specific parameters can be provided in a separate
+.yaml file provided in the working directory (see [Examples](#examples)).
+
 
 [TOC]: #
 
@@ -11,9 +21,12 @@ This profile is heavily based on the excellent
 - [Install](#install)
   - [Dependencies](#dependencies)
   - [Profile](#profile)
+    - [Submission parameters](#submission-parameters)
+    - [Status check parameters](#status-check-parameters)
 - [Usage](#usage)
   - [Standard rule-specific cluster resource settings](#standard-rule-specific-cluster-resource-settings)
   - [Non-standard rule-specific cluster resource settings](#non-standard-rule-specific-cluster-resource-settings)
+- [Examples](#examples)
 
 ## Install
 
@@ -47,7 +60,7 @@ the next two subsections. Each parameter has default settings and simply
 pressing enter at the prompt will choose the default setting of that parameter
 for the profile.
 
-### Submission parameters
+#### Submission parameters
 Parameter explanations as retrieved from `snakemake --help`.
 
 * `latency_wait`
@@ -212,7 +225,7 @@ Parameter explanations as retrieved from `snakemake --help`.
     --printshellcmds, -p  Print out the shell commands that will be executed.
   ```
 
-### Status check parameters
+#### Status check parameters
 These parameters help with debugging cluster status checks. For standard use,
 it is recommended to keep the default settings of these parameters. Should
 issues occur with this profile and job status checks by snakemake, for instance
@@ -323,10 +336,10 @@ details check `man qsub`):
 this profile and are not guaranteed to be valid on non-UGE cluster systems.
 
 All settings are given with the `rule` name as the key, and the additional
-cluster settings as a list ([sequence][yaml-collections]), with the UGe-specific
+cluster settings as a list ([sequence][yaml-collections]), with the UGE-specific
 flag followed by its argument (if applicable).
 
-#### Examples
+### Examples
 
 `Snakefile`
 
@@ -372,14 +385,12 @@ Although `-P` is provided twice, UGE uses the last instance.
 <!--Link References-->
 
 [lsf-profile]: https://github.com/Snakemake-Profiles/snakemake-lsf
-[broad-uger]: https://github.com/broadinstitute/snakemake-broad-uger
 [snakemake_params]: https://snakemake.readthedocs.io/en/stable/executing/cli.html#all-options
 [cookiecutter-repo]: https://github.com/cookiecutter/cookiecutter
 [profile]: https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles
 [threads]: https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#threads
 [resources]: https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#resources
-[1]: https://snakemake.readthedocs.io/en/stable/executing/cluster-cloud.html#cluster-execution
-[uuid]: https://docs.python.org/3.6/library/uuid.html
+[1]: https://snakemake.readthedocs.io/en/stable/executing/cli.html#cluster-execution
 [config-deprecate]: https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html#cluster-configuration-deprecated
 [yaml-collections]: https://yaml.org/spec/1.2/spec.html#id2759963
 
