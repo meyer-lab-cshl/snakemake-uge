@@ -87,17 +87,28 @@ class StatusChecker:
         returncode, output_stream, error_stream = OSLayer.run_process(
             self.qstat_query_cmd
         )
-        if str(returncode) != 0:
+        if returncode != 0:
+            if error_stream.startswith("Following jobs do not exist"):
+                print("Job {jobid} has finished, check status via "
+                        "qacct".format(jobid=self.jobid))
+                return "finished"
             raise QstatError(
-                "qstat failed on job {jobid} with {returncode}".format(
-                    jobid=self.jobid, returncode=returncode
+                    "qstat failed on job {jobid} with: {error}".format(
+                    jobid=self.jobid, error=error_stream
+                )
+            )
+
+        if not output_stream:
+            raise QstatError(
+                "qstat failed on job {jobid} with empty output".format(
+                    jobid=self.jobid,
                 )
             )
         status = self._qstat_job_state(output_stream)
         if status not in self.STATUS_TABLE.keys():
             raise KeyError(
-                "[Predicted exception] Unknown job status "
-                "{status} for {jobid}".format(status=status, jobid=self.jobid)
+                "Unknown job status '{status}' for {jobid}".format(
+                    status=status, jobid=self.jobid)
             )
         return self.STATUS_TABLE[status]
 
@@ -112,18 +123,24 @@ class StatusChecker:
             self.qacct_query_cmd
         )
 
-        if str(returncode) != 0:
+        if returncode != 0:
             raise QacctError(
-                "qacct failed on job {jobid} with {returncode}".format(
-                    jobid=self.jobid, returncode=returncode
+                    "qacct failed on job {jobid} with: {error}".format(
+                    jobid=self.jobid, error=error_stream
                 )
             )
 
+        if not output_stream:
+            raise QacctError(
+                "qacct failed on job {jobid} with empty output".format(
+                    jobid=self.jobid,
+                )
+            )
         status = self._qacct_job_state(output_stream)
         if status not in self.STATUS_TABLE.keys():
             raise KeyError(
-                "[Predicted exception] Unknown job status "
-                "{status} for {jobid}".format(status=status, jobid=self.jobid)
+                "Unknown job status '{status}' for {jobid}".format(
+                    status=status, jobid=self.jobid)
             )
         return self.STATUS_TABLE[status]
 
@@ -136,8 +153,8 @@ class StatusChecker:
         status = lastline[0].strip().decode("utf-8")
         if status not in self.STATUS_TABLE.keys():
             raise UnknownStatusLine(
-                "[Predicted exception] Unknown job status "
-                "{status} for {jobid}".format(status=status, jobid=self.jobid)
+                "Unknown job status '{status}' for {jobid}".format(
+                    status=status, jobid=self.jobid)
             )
         return self.STATUS_TABLE[status]
 
@@ -162,7 +179,7 @@ class StatusChecker:
         state = ""
         for line in output_stream.split("\n"):
             if line.startswith("job_state"):
-                state = line.strip()[-1]
+                state = line.strip()[-2:].strip()
                 break  # exit for loop
         return state
 
@@ -170,6 +187,7 @@ class StatusChecker:
     def _qacct_job_state(output_stream) -> str:
         exit_state = ""
         failed = ""
+
         for line in output_stream.split("\n"):
             if line.startswith("failed"):
                 failed = line.strip()[-1]
@@ -217,7 +235,7 @@ class StatusChecker:
 
             except KeyError as error:
                 print(
-                    "[Predicted exception] Unknown job status: {error}".format(
+                    "[Predicted exception] {error}".format(
                         error=error
                     ),
                     file=sys.stderr,
@@ -225,14 +243,15 @@ class StatusChecker:
                 print("Resuming...", file=sys.stderr)
                 time.sleep(self.wait_between_tries)
 
-        if status is None:
-            print(
-                "qstat checks failed {try_times} times.".format(
-                    try_times=self.max_status_checks
-                ),
-                file=sys.stderr,
-            )
-            print("Checking via qacct...", file=sys.stderr)
+        if status is None or status is "finished":
+            if status is None:
+                print(
+                    "qstat checks failed {try_times} times.".format(
+                        try_times=self.max_status_checks
+                    ),
+                    file=sys.stderr,
+                )
+            print("Checking status via qacct...", file=sys.stderr)
             try:
                 status = self._query_status_using_qacct()
             except QacctError as error:
@@ -245,7 +264,7 @@ class StatusChecker:
 
             except KeyError as error:
                 print(
-                    "[Predicted exception] Unknown job status: {error}".format(
+                    "[Predicted exception] {error}".format(
                         error=error
                     ),
                     file=sys.stderr,
@@ -253,7 +272,7 @@ class StatusChecker:
 
         if status is None:
             print(
-                "qacct check failed. Checking via cluster log...",
+                "qacct check failed. Checking status via cluster log...",
                 file=sys.stderr,
             )
             status = self._query_status_using_cluster_log()
