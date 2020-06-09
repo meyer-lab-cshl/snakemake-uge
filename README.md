@@ -163,6 +163,9 @@ Parameter explanations as retrieved from `snakemake --help`.
   See [below](#standard-rule-specific-cluster-resource-settings) for how to
   overwrite this in a `rule`.
 
+  *NOTE: The submission script takes care of converting the threads and memory specified in MegaByte*
+  *per rule into a memory request "per thread" in GigaByte.*
+  
 * `default_cluster_logdir`
 
   **Default**: `"cluster_logs"`
