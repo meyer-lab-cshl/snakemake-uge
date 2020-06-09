@@ -57,8 +57,6 @@ class StatusChecker:
         self,
         jobid: int,
         outlog: str,
-        wait_between_tries: float = 0.001,
-        max_status_checks: int = 3,
     ):
         self._jobid = jobid
         self._outlog = outlog
