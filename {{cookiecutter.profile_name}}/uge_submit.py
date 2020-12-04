@@ -151,7 +151,7 @@ class Submitter:
 
     @property
     def logdir(self) -> Path:
-        project_logdir = Path(self.cluster.get("logdir",
+        project_logdir = Path(self.job_properties.get("log",
             CookieCutter.get_log_dir()))
         return project_logdir / self.rule_name
 
