@@ -71,12 +71,14 @@ class Submitter:
 
     @property
     def mem_mb(self) -> Memory:
-        mem_value = self.resources.get(
-            "mem_mb", self.cluster.get("mem_mb",
-                CookieCutter.get_default_mem_mb())
-        )
-        return Memory(mem_value, unit=Unit.MEGA)
+        mem_value = self.resources.get("mem_mb")
+        if not mem_value:
+            mem_value = self.cluster.get("mem_mb")
+        if not mem_value:
+            mem_value = CookieCutter.get_default_mem_mb()
 
+        return Memory(mem_value, unit=Unit.MEGA)
+    
     @property
     def memory_units(self) -> Unit:
         return self._memory_units
