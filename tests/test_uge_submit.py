@@ -1,16 +1,17 @@
 import json
 import tempfile
 import unittest
+import math
 from io import StringIO
 from pathlib import Path
 from subprocess import CalledProcessError
 from unittest.mock import patch
 
-from tests.src.CookieCutter import CookieCutter
-from tests.src.OSLayer import OSLayer
-from tests.src.uge_config import Config
-from tests.src.memory_units import Unit, Memory
-from tests.src.uge_submit import (
+from src.CookieCutter import CookieCutter
+from src.OSLayer import OSLayer
+from src.uge_config import Config
+from src.memory_units import Unit, Memory
+from src.uge_submit import (
     Submitter,
     QsubInvocationError,
     JobidNotFoundError,
