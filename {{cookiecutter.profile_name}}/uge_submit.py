@@ -71,12 +71,14 @@ class Submitter:
 
     @property
     def mem_mb(self) -> Memory:
-        mem_value = self.resources.get(
-            "mem_mb", self.cluster.get("mem_mb",
-                CookieCutter.get_default_mem_mb())
-        )
-        return Memory(mem_value, unit=Unit.MEGA)
+        mem_value = self.resources.get("mem_mb")
+        if not mem_value:
+            mem_value = self.cluster.get("mem_mb")
+        if not mem_value:
+            mem_value = CookieCutter.get_default_mem_mb()
 
+        return Memory(mem_value, unit=Unit.MEGA)
+    
     @property
     def memory_units(self) -> Unit:
         return self._memory_units
@@ -92,9 +94,9 @@ class Submitter:
     def resources_cmd(self) -> str:
         mem_in_cluster_units = self.mem_mb.to(self.memory_units)
         if self.threads > 1:
-            res_cmd = "-pe smp {threads} ".format(threads=self.threads)
+            res_cmd = "-pe threads {threads} ".format(threads=self.threads)
             per_thread = round(mem_in_cluster_units.value / self.threads, 2)
-            per_thread_to_submit = math.ceil(per_thread)
+            per_thread = math.ceil(per_thread)
         else:
             res_cmd = ""
             per_thread = math.ceil(mem_in_cluster_units.value)
