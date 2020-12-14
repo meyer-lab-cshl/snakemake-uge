@@ -40,7 +40,7 @@ class TestSubmitter(unittest.TestCase):
         expected_rule_name = "search_fasta_on_index"
         expected_jobname = "smk.search_fasta_on_index.i=0"
         expected_logdir = Path("logdir") / expected_rule_name
-        expected_resource_cmd = "-pe smp 4 -l h_vmem={mem}G -l m_mem_free={mem}G".format(
+        expected_resource_cmd = "-pe threads 4 -l h_vmem={mem}G -l m_mem_free={mem}G".format(
                 mem=expected_per_thread_final)
         expected_outlog = expected_logdir / "{jobname}.out".format(
             jobname=expected_jobname
@@ -76,7 +76,7 @@ class TestSubmitter(unittest.TestCase):
         self.assertEqual(uge_submit.queue_cmd, "-q q1")
         self.assertEqual(
             uge_submit.submit_cmd,
-            "qsub -cwd -pe smp 4 -l h_vmem={mem}G -l m_mem_free={mem}G "
+            "qsub -cwd -pe threads 4 -l h_vmem={mem}G -l m_mem_free={mem}G "
             "{jobinfo} -q q1 cluster_opt_1 cluster_opt_2 cluster_opt_3 "
             "real_jobscript.sh".format(
                 mem=expected_per_thread_final, jobinfo=expected_jobinfo_cmd
@@ -190,7 +190,7 @@ class TestSubmitter(unittest.TestCase):
         remove_file_mock.assert_any_call(expected_outlog)
         remove_file_mock.assert_any_call(expected_errlog)
         run_process_mock.assert_called_once_with(
-            "qsub -cwd -pe smp 4 -l h_vmem={mem}G -l m_mem_free={mem}G "
+            "qsub -cwd -pe threads 4 -l h_vmem={mem}G -l m_mem_free={mem}G "
             "{jobinfo} -q q1 cluster_opt_1 cluster_opt_2 cluster_opt_3 "
             "real_jobscript.sh".format(
                 mem=expected_per_thread_final, jobinfo=expected_jobinfo_cmd
@@ -312,7 +312,7 @@ class TestSubmitter(unittest.TestCase):
         expected_per_thread_decimal = round(expected_mem / expected_threads, 2)
         expected_per_thread_final = math.ceil(expected_per_thread_decimal)
         expected = (
-            "qsub -cwd -pe smp 4 -l h_vmem={mem}G -l m_mem_free={mem}G "
+            "qsub -cwd -pe threads 4 -l h_vmem={mem}G -l m_mem_free={mem}G "
 
             "{jobinfo} -q q1 cluster_opt_1 cluster_opt_2 cluster_opt_3 "
             "-q queue -gpu - -P project "
