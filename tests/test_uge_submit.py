@@ -32,13 +32,16 @@ class TestSubmitter(unittest.TestCase):
         ]
         expected_cluster_cmd = "cluster_opt_1 cluster_opt_2 cluster_opt_3"
         expected_jobscript = "real_jobscript.sh"
-        expected_mem = 1
+        expected_mem = 5
+        expected_threads = 4
+        expected_per_thread_decimal = round(expected_mem / expected_threads, 2)
+        expected_per_thread_final = math.ceil(expected_per_thread_decimal)
         expected_wildcards_str = "i=0"
         expected_rule_name = "search_fasta_on_index"
         expected_jobname = "smk.search_fasta_on_index.i=0"
         expected_logdir = Path("logdir") / expected_rule_name
-        expected_resource_cmd = "-l h_vmem={mem}G -l m_mem_free={mem}G".format(
-                mem=expected_mem)
+        expected_resource_cmd = "-pe smp 4 -l h_vmem={mem}G -l m_mem_free={mem}G".format(
+                mem=expected_per_thread_final)
         expected_outlog = expected_logdir / "{jobname}.out".format(
             jobname=expected_jobname
         )
@@ -56,8 +59,8 @@ class TestSubmitter(unittest.TestCase):
         self.assertEqual(
             uge_submit.cluster_cmd, expected_cluster_cmd
         )
-        self.assertEqual(uge_submit.threads, 1)
-        self.assertEqual(uge_submit.mem_mb, Memory(1000, Unit.MEGA))
+        self.assertEqual(uge_submit.threads, expected_threads)
+        self.assertEqual(uge_submit.mem_mb, Memory(5000, Unit.MEGA))
         self.assertEqual(uge_submit.jobid, "2")
         self.assertEqual(uge_submit.wildcards_str, expected_wildcards_str)
         self.assertEqual(uge_submit.rule_name, expected_rule_name)
@@ -73,10 +76,10 @@ class TestSubmitter(unittest.TestCase):
         self.assertEqual(uge_submit.queue_cmd, "-q q1")
         self.assertEqual(
             uge_submit.submit_cmd,
-            "qsub -cwd -l h_vmem={mem}G -l m_mem_free={mem}G "
+            "qsub -cwd -pe smp 4 -l h_vmem={mem}G -l m_mem_free={mem}G "
             "{jobinfo} -q q1 cluster_opt_1 cluster_opt_2 cluster_opt_3 "
             "real_jobscript.sh".format(
-                mem=expected_mem, jobinfo=expected_jobinfo_cmd
+                mem=expected_per_thread_final, jobinfo=expected_jobinfo_cmd
             ),
         )
 
@@ -154,7 +157,12 @@ class TestSubmitter(unittest.TestCase):
             "real_jobscript.sh",
         ]
 
-        expected_mem = 1
+        expected_mem = 5
+        
+        expected_mem = 5
+        expected_threads = 4
+        expected_per_thread_decimal = round(expected_mem / expected_threads, 2)
+        expected_per_thread_final = math.ceil(expected_per_thread_decimal)
         expected_wildcards_str = "i=0"
         expected_rule_name = "search_fasta_on_index"
         expected_jobname = "smk.{rule}.{wc}".format(
@@ -182,10 +190,10 @@ class TestSubmitter(unittest.TestCase):
         remove_file_mock.assert_any_call(expected_outlog)
         remove_file_mock.assert_any_call(expected_errlog)
         run_process_mock.assert_called_once_with(
-            "qsub -cwd -l h_vmem={mem}G -l m_mem_free={mem}G "
+            "qsub -cwd -pe smp 4 -l h_vmem={mem}G -l m_mem_free={mem}G "
             "{jobinfo} -q q1 cluster_opt_1 cluster_opt_2 cluster_opt_3 "
             "real_jobscript.sh".format(
-                mem=expected_mem, jobinfo=expected_jobinfo_cmd
+                mem=expected_per_thread_final, jobinfo=expected_jobinfo_cmd
             )
         )
         print_mock.assert_called_once_with(
@@ -299,13 +307,17 @@ class TestSubmitter(unittest.TestCase):
             errlog=expected_errlog,
             jobname=expected_jobname,
         )
-        expected_mem = 1
+        expected_mem = 5
+        expected_threads = 4
+        expected_per_thread_decimal = round(expected_mem / expected_threads, 2)
+        expected_per_thread_final = math.ceil(expected_per_thread_decimal)
         expected = (
-            "qsub -cwd -l h_vmem={mem}G -l m_mem_free={mem}G "
+            "qsub -cwd -pe smp 4 -l h_vmem={mem}G -l m_mem_free={mem}G "
+
             "{jobinfo} -q q1 cluster_opt_1 cluster_opt_2 cluster_opt_3 "
             "-q queue -gpu - -P project "
             "real_jobscript.sh".format(
-                mem=expected_mem, jobinfo=expected_jobinfo_cmd
+                mem=expected_per_thread_final, jobinfo=expected_jobinfo_cmd
             )
         )
         actual = uge_submit.submit_cmd
