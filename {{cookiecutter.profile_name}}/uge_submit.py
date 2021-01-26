@@ -115,7 +115,7 @@ class Submitter:
     @property
     def wildcards_str(self) -> str:
         return (
-            ".".join("{}={}".format(k, v) for k, v in self.wildcards.items())
+            ".".join("{}".format(v) for v in self.wildcards.values())
             or "unique"
         )
 
