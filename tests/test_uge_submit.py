@@ -36,9 +36,9 @@ class TestSubmitter(unittest.TestCase):
         expected_threads = 4
         expected_per_thread_decimal = round(expected_mem / expected_threads, 2)
         expected_per_thread_final = math.ceil(expected_per_thread_decimal)
-        expected_wildcards_str = "i=0"
+        expected_wildcards_str = "0"
         expected_rule_name = "search_fasta_on_index"
-        expected_jobname = "smk.search_fasta_on_index.i=0"
+        expected_jobname = "smk.search_fasta_on_index.0"
         expected_logdir = Path("logdir") / expected_rule_name
         expected_resource_cmd = "-pe threads 4 -l h_vmem={mem}G -l m_mem_free={mem}G".format(
                 mem=expected_per_thread_final)
@@ -163,7 +163,7 @@ class TestSubmitter(unittest.TestCase):
         expected_threads = 4
         expected_per_thread_decimal = round(expected_mem / expected_threads, 2)
         expected_per_thread_final = math.ceil(expected_per_thread_decimal)
-        expected_wildcards_str = "i=0"
+        expected_wildcards_str = "0"
         expected_rule_name = "search_fasta_on_index"
         expected_jobname = "smk.{rule}.{wc}".format(
             rule=expected_rule_name, wc=expected_wildcards_str
@@ -229,7 +229,7 @@ class TestSubmitter(unittest.TestCase):
         uge_submit = Submitter(jobscript=argv[-1], cluster_cmds=argv[1:-1])
         self.assertRaises(QsubInvocationError, uge_submit.submit)
 
-        expected_wildcards_str = "i=0"
+        expected_wildcards_str = "0"
         expected_rule_name = "search_fasta_on_index"
         expected_jobname = "smk.{rule}.{wc}".format(
             rule=expected_rule_name, wc=expected_wildcards_str
@@ -288,7 +288,7 @@ class TestSubmitter(unittest.TestCase):
             uge_config=uge_config,
         )
 
-        expected_wildcards_str = "i=0"
+        expected_wildcards_str = "0"
         expected_rule_name = "search_fasta_on_index"
         expected_jobname = "smk.{rule}.{wc}".format(
             rule=expected_rule_name, wc=expected_wildcards_str
@@ -443,7 +443,7 @@ class TestSubmitter(unittest.TestCase):
         uge_submit = Submitter(jobscript=str(jobscript))
 
         actual = uge_submit.jobname
-        expected = "smk.search.i=0"
+        expected = "smk.search.0"
 
         assert actual == expected
 

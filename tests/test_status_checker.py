@@ -3,7 +3,7 @@ from subprocess import CalledProcessError
 from unittest.mock import patch
 
 import pytest
-
+from pathlib import Path
 from tests.src.OSLayer import OSLayer
 from tests.src.CookieCutter import CookieCutter
 from tests.src.uge_status import StatusChecker, QstatError, QacctError, UnknownStatusLine
@@ -195,6 +195,26 @@ class TestStatusChecker(unittest.TestCase):
                 uge_status_checker._query_status_using_qstat)
         run_process_mock.assert_called_once_with("qstat -j 123")
 
+    @patch.object(CookieCutter, "get_log_dir", return_value="logdir")
+    @patch.object(CookieCutter, "get_max_qstat_checks", return_value=1)
+    
+    @patch.object(CookieCutter, "get_latency_wait", return_value=45)
+    @patch.object(CookieCutter, "get_time_between_qstat_checks", return_value=1)
+    @patch.object(OSLayer,
+            "run_process",
+            return_value=(1, "-----------------------------", ""))
+    def test_get_status_dashed_status(
+        self, run_process_mock, *othermocks
+    ):
+        expected_rule_name = "search_fasta_on_index"
+        expected_jobname = "smk.search_fasta_on_index.0"
+        expected_logdir = Path("logdir") / expected_rule_name
+        outlog = expected_logdir / "{jobname}.out".format(jobname=expected_jobname)
+        uge_status_checker = StatusChecker(123, "test")
+        actual = uge_status_checker.get_status()
+        expected = "running"
+        self.assertEqual(actual, expected)
+        run_process_mock.assert_called_with("qacct -j 123")
 
 if __name__ == "__main__":
     unittest.main()

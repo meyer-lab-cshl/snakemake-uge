@@ -186,7 +186,7 @@ Parameter explanations as retrieved from `snakemake --help`.
 
 * `max_status_checks_per_second`
 
-  **Default**: `10`
+  **Default**: `0.01`
 
   This sets the default `--max-status-checks-per-second` parameter in
   `snakemake`.
@@ -199,7 +199,7 @@ Parameter explanations as retrieved from `snakemake --help`.
 
 * `max_jobs_per_second`
 
-  **Default**: `10`
+  **Default**: `1`
 
   This sets the default `--max-jobs-per-second` parameter in `snakemake`.
 
@@ -342,6 +342,8 @@ All settings are given with the `rule` name as the key, and the additional
 cluster settings as a list ([sequence][yaml-collections]), with the UGE-specific
 flag followed by its argument (if applicable).
 
+***NOTE:*** Directory paths should not be used as wildcards. If a directory is
+used as a wildcard, any "/" will be replaced with "-". 
 ### Examples
 
 `Snakefile`
