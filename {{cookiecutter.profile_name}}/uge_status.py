@@ -163,12 +163,16 @@ class StatusChecker:
             return self.STATUS_TABLE["r"]
 
         status = lastline[0].strip().decode("utf-8")
-        if status not in self.STATUS_TABLE.keys():
-            raise UnknownStatusLine(
-                "Unknown job status '{status}' for {jobid}".format(
-                    status=status, jobid=self.jobid)
-            )
-        return self.STATUS_TABLE[status]
+        if status.startswith('EXIT_STATUS'):
+            if status not in self.STATUS_TABLE.keys():
+                raise KeyError(
+                                "Unknown job status '{status}' for {jobid}".format(
+                                    status=status, jobid=self.jobid)
+                                )
+            else:
+                return self.STATUS_TABLE[status]
+        else:
+            return self.STATUS_TABLE["r"]
 
     @staticmethod
     def _extract_time(line, time_name) -> float:
