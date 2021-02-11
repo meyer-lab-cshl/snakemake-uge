@@ -13,6 +13,8 @@ snakemake --profile uge [snakemake options]
 The profile takes care of job submission and status checks. Rule specific parameters can be provided in a separate
 .yaml file provided in the working directory (see [Examples](#examples)).
 
+Note: For pipelines consisting of many jobs with short excution times (less than or a few minutes), we recommend running snakemake in single node mode i.e. a single multicore UGE interactive job on one node. In these pipelines, the overall run time could be dominated by UGE queueing/processing time. For pipelines with longer job runtimes and/or very different memory/cpu requirements per rule, using the profile described in this repository is recommended. 
+
 
 [TOC]: #
 
