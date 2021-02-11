@@ -9,11 +9,11 @@
     "default_threads": 1,
     "default_cluster_logdir": "cluster_logs",
     "default_queue": "",
-    "max_status_checks_per_second": 0.01,
+    "max_status_checks_per_second": 0.017,
     "max_jobs_per_second": 1,
     "log_status_checks": false,
     "max_qstat_checks": 3,
-    "time_between_qstat_checks": 0.001,
+    "time_between_qstat_checks": 60,
     "print_shell_commands": true,
     "profile_name": "uge"
 }
