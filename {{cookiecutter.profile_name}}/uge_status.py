@@ -282,7 +282,7 @@ class StatusChecker:
                             jobid=self.jobid),
                         file=sys.stderr
                         )
-            time.sleep(self.latency_wait)
+            #time.sleep(self.latency_wait)
 
             try:
                 status = self._query_status_using_qacct()
