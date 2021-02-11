@@ -65,7 +65,7 @@ Parameter explanations as retrieved from `snakemake --help`.
 
 * `latency_wait`
 
-  **Default:** `120`
+  **Default:** `45`
 
   This sets the default `--latency-wait/--output-wait/-w` parameter in
   `snakemake`.
@@ -183,32 +183,6 @@ Parameter explanations as retrieved from `snakemake --help`.
   default on your cluster will be used.
   The `qsub` parameter that this controls is [`-q`][qsub-q].
 
-
-* `max_status_checks_per_second`
-
-  **Default**: `0.01`
-
-  This sets the default `--max-status-checks-per-second` parameter in
-  `snakemake`.
-
-  ```text
-    --max-status-checks-per-second MAX_STATUS_CHECKS_PER_SECOND
-                        Maximal number of job status checks per second,
-                        default is 10, fractions allowed.
-  ```
-
-* `max_jobs_per_second`
-
-  **Default**: `1`
-
-  This sets the default `--max-jobs-per-second` parameter in `snakemake`.
-
-  ```text
-    --max-jobs-per-second MAX_JOBS_PER_SECOND
-                        Maximal number of cluster/drmaa jobs per second,
-                        default is 10, fractions allowed.
-  ```
-
 * `profile_name`
 
   **Default**: `uge`
@@ -229,10 +203,11 @@ Parameter explanations as retrieved from `snakemake --help`.
   ```
 
 #### Status check parameters
-These parameters help with debugging cluster status checks. For standard use,
-it is recommended to keep the default settings of these parameters. Should
-issues occur with this profile and job status checks by snakemake, for instance
-`snakemake.exceptions.WorkflowError: Failed to obtain job status.` errors, it is
+The status check parameters dsecribed [here](UGE_parameters.md) should not be changed unless discussed with IT.
+The compute cluster is a shared resource and running workflow managers like snakemake submitting large amounts
+of jobs and high frequency status checks can slow down the compute environment for everyone. Should issues
+occur with this profile and job status checks by snakemake,
+for instance `snakemake.exceptions.WorkflowError: Failed to obtain job status.` errors, it is
 recommended to set `log_status_checks` to True to track the issues.
 
 * `log_status_checks`
@@ -242,22 +217,6 @@ recommended to set `log_status_checks` to True to track the issues.
   When set, status check tries and exceptions are printed to stderr. Recommended
   to set to True for issues with status checks by snakemake, e.g.
   `snakemake.exceptions.WorkflowError: Failed to obtain job status.` errors.
-
-* `max_qstat_checks`
-
-  **Default**: 45  
-
-  This sets the maximum number of times `qstat -j JOBID` is invoked to determine
-  the current status of the job. If `qstat` fails because the job has
-  finished or if qstat has been called unsuccessfully for `max_qstat_checks`
-  times, then the job exit status will be determined via `qacct -j JOBID`.
-
-* `time_between_qstat_checks`
-
-  **Default**: 0.01  
-
-  This sets the times in seconds to wait between job status checks via
-  `qstat -j jobid`; see `max_qstat_checks` above.
 
 ## Usage
 
@@ -344,6 +303,7 @@ flag followed by its argument (if applicable).
 
 ***NOTE:*** Directory paths should not be used as wildcards. If a directory is
 used as a wildcard, any "/" will be replaced with "-". 
+
 ### Examples
 
 `Snakefile`
