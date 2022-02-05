@@ -329,7 +329,7 @@ rule count:
 ```yaml
 __default__:
   - "-P standard "
-  - "l h_rt=01:00:00"
+  - "-l h_rt=01:00:00"
 
 grep:
   - "-P icecream "
