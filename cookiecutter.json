@@ -3,7 +3,7 @@
     "use_conda": true,
     "use_singularity": false,
     "keep_going": true,
-    "restart_times": 1,
+    "restart_times": 0,
     "jobs": 500,
     "default_mem_mb": 1024,
     "default_threads": 1,
