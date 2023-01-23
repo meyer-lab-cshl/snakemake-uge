@@ -231,7 +231,7 @@ class Submitter:
             parameters_to_status_script = self._get_parameters_to_status_script(
                 external_job_id
             )
-            OSLayer.print(parameters_to_status_script)
+            #OSLayer.print(parameters_to_status_script)
         except subprocess.CalledProcessError as error:
             raise QsubInvocationError(error)
         except AttributeError as error:
