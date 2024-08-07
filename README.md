@@ -6,8 +6,14 @@ It is heavily based on the excellent [snakemake-lsf profile][lsf-profile].
 After installation and set-up of this profile (described in detail below), snakemake can be run on a UGE
 with the simple command:
 
+For snakemake versions less or equal to v7.30: 
 ```bash
 snakemake --profile uge [snakemake options]
+```
+
+For snakemake versions greater or equal to v8.0: 
+```bash
+snakemake --executor cluster-sync --profile uge [snakemake options]
 ```
 
 The profile takes care of job submission and status checks. Rule specific parameters can be provided in a separate
@@ -41,6 +47,12 @@ can be installed using `conda` or `pip`:
 pip install --user cookiecutter
 # or
 conda install -c conda-forge cookiecutter
+```
+IMPORTANT: With snakemake version 8, a new CLI for interaction with a high performance compute system was introduced (as described in these [release-notes]). For this profile to work with snakemake >= 8, the following [executor-plugin] needs to be installed in the environment
+from which snakemake is called:
+
+```bash
+pip install snakemake-executor-plugin-cluster-sync
 ```
 
 ### Profile
@@ -360,4 +372,6 @@ Although `-P` is provided twice, UGE uses the last instance.
 [1]: https://snakemake.readthedocs.io/en/stable/executing/cli.html#cluster-execution
 [config-deprecate]: https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html#cluster-configuration-deprecated
 [yaml-collections]: https://yaml.org/spec/1.2/spec.html#id2759963
+[release-notes]: https://snakemake.readthedocs.io/en/stable/getting_started/migration.html
+[executor-plugin]: https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/cluster-sync.html
 
